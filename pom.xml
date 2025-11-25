@@ -22,15 +22,14 @@
 
     <properties>
         <java.version>17</java.version>
+        <kotlin.version>2.0.21</kotlin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <!-- Dependency versions -->
-        <jjwt.version>0.12.5</jjwt.version>
-        <aws.sdk.version>2.20.26</aws.sdk.version>
-        <modelmapper.version>3.2.5</modelmapper.version>
+        <!-- Test dependencies -->
         <testcontainers.version>1.21.3</testcontainers.version>
         <kafka.version>3.3.8</kafka.version>
-        <mongodb.version>4.11.1</mongodb.version>
+        <flapdoodle.embed.mongo.version>4.21.0</flapdoodle.embed.mongo.version>
+
         <sonar.organization>innowise-max3tmk</sonar.organization>
     </properties>
 
@@ -55,14 +54,30 @@
     </dependencyManagement>
 
     <dependencies>
-        <!-- Common module dependency -->
+        <!-- Kotlin -->
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib</artifactId>
+            <version>${kotlin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-reflect</artifactId>
+            <version>${kotlin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-kotlin</artifactId>
+        </dependency>
+
+        <!-- Common module -->
         <dependency>
             <groupId>com.innowise</groupId>
             <artifactId>common</artifactId>
             <version>1.0.0</version>
         </dependency>
 
-        <!-- Spring Boot Starters -->
+        <!-- Spring Boot -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -93,45 +108,32 @@
             <version>${kafka.version}</version>
         </dependency>
 
-        <!-- ModelMapper -->
-        <dependency>
-            <groupId>org.modelmapper</groupId>
-            <artifactId>modelmapper</artifactId>
-            <version>${modelmapper.version}</version>
-        </dependency>
-
-        <!-- Lombok -->
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-        <!-- JWT -->
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-api</artifactId>
-            <version>${jjwt.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-impl</artifactId>
-            <version>${jjwt.version}</version>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-jackson</artifactId>
-            <version>${jjwt.version}</version>
-            <scope>runtime</scope>
-        </dependency>
-
-        <!-- Test dependencies -->
+        <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-test-junit5</artifactId>
+            <version>${kotlin.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito.kotlin</groupId>
+            <artifactId>mockito-kotlin</artifactId>
+            <version>5.1.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>de.flapdoodle.embed</groupId>
+            <artifactId>de.flapdoodle.embed.mongo</artifactId>
+            <version>${flapdoodle.embed.mongo.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Testcontainers -->
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -147,10 +149,43 @@
     </dependencies>
 
     <build>
+        <sourceDirectory>${project.basedir}/src/main/kotlin</sourceDirectory>
+        <testSourceDirectory>${project.basedir}/src/test/kotlin</testSourceDirectory>
+
         <plugins>
+            <!-- Kotlin Maven Plugin -->
+            <plugin>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-maven-plugin</artifactId>
+                <version>${kotlin.version}</version>
+                <configuration>
+                    <jvmTarget>${java.version}</jvmTarget>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>test-compile</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>test-compile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Spring Boot Plugin -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>com.innowise.activity.ActivityServiceApplicationKt</mainClass>
+                </configuration>
                 <executions>
                     <execution>
                         <goals>
@@ -158,13 +193,6 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <release>${java.version}</release>
-                </configuration>
             </plugin>
         </plugins>
     </build>
