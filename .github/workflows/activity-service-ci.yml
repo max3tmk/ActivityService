@@ -14,15 +14,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17 with GitHub Packages auth
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
           cache: maven
-          server-id: github
-          server-username: max3tmk
-          server-password: GH_PACKAGES_TOKEN
 
       - name: Cache Maven dependencies
         uses: actions/cache@v4
@@ -32,11 +29,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      - name: Build ActivityService
-        run: mvn clean package -DskipTests
+      - name: Build with GitHub Packages auth
+        run: mvn -s .github/workflows/maven-settings.xml clean package
+        env:
+          GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
 
       - name: Run Tests
-        run: mvn test
+        run: mvn -s .github/workflows/maven-settings.xml test
+        env:
+          GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
 
   sonarqube:
     name: SonarQube Analysis
@@ -69,8 +70,7 @@ jobs:
         run: |
           mvn verify sonar:sonar \
             -Dsonar.projectKey=max3tmk_ActivityService \
-            -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.organization=max3tmk
+            -Dsonar.host.url=https://sonarcloud.io\
 
   docker:
     name: Build and Push Docker Image
@@ -87,16 +87,13 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Cache Maven dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
+      - name: Build JAR
+        run: mvn -s .github/workflows/maven-settings.xml clean package -DskipTests
+        env:
+          GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
 
-      - name: Build ActivityService JAR
-        run: mvn clean package -DskipTests
+      - name: Copy JAR for Docker
+        run: cp target/activity-service-*.jar activity-service.jar
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

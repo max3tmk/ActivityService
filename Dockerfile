@@ -1,7 +1,7 @@
 FROM eclipse-temurin:17-jre-alpine AS base
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 WORKDIR /app
-COPY target/activity-service.jar app.jar
+COPY activity-service.jar app.jar
 USER root
 RUN apk update && apk add --no-cache curl
 USER appuser
